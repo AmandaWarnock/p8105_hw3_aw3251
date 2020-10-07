@@ -93,5 +93,36 @@ instacart %>%
 ```
 
 
+## Problem 2
 
+Load, tidy, and wrangle data. Pivot longer to add rows minute of the day and activity count
+
+```{r}
+accel_df = read_csv(file = "./data/accel_data.csv") %>% 
+  janitor::clean_names()
+
+accel_tidy = 
+  pivot_longer(
+    accel_df,
+    activity_1:activity_1440,
+    names_to = "minute",
+    values_to = "activity_count"
+  ) %>% 
+  mutate(day_category = recode(day, Monday = "weekday", Tuesday = "weekday", Wednesday = "weekday", Thursday = "weekday", Friday = "weekday", Saturday = "weekend", Sunday = "weekend")) %>% 
+  relocate(day_category, .after = day) %>% 
+  mutate(day = as.factor(day)) %>% 
+  mutate(day_category = as.factor(day_category)) 
+
+accel_tidy
+```
+
+This dataset includes five weeks of activity data for every minute of the five weeks from an accelerometer used by a 63-year old man. The variables included are `r names(accel_tidy)`. 'Day_category' defines whether the day is a weekday or weekend. 'Minute' defines which minute of the day the activity occurred starting at midnight, and 'activity_count' includes a count of the activity in that minute. The dataset has `r nrow(accel_tidy)` rows and `r ncol(accel_tidy)` columns.
+
+
+Create a total activity table for each day.
+
+```{r}
+accel_tidy %>% 
+  group_by(day_id) 
+```
 
