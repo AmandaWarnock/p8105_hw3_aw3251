@@ -10,6 +10,8 @@ output: github_document
 library(tidyverse)
 library(p8105.datasets)
 data("instacart")
+library(p8105.datasets)
+data("ny_noaa")
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -111,7 +113,7 @@ accel_tidy =
   mutate(day_category = recode(day, Monday = "weekday", Tuesday = "weekday", Wednesday = "weekday", Thursday = "weekday", Friday = "weekday", Saturday = "weekend", Sunday = "weekend")) %>% 
   relocate(day_category, .after = day) %>% 
   mutate(day = as.factor(day)) %>% 
-  mutate(day_category = as.factor(day_category)) 
+  mutate(day_category = as.factor(day_category))
 
 accel_tidy
 ```
@@ -123,6 +125,72 @@ Create a total activity table for each day.
 
 ```{r}
 accel_tidy %>% 
-  group_by(day_id) 
+  group_by(day, week) %>% 
+  summarize(sum_count = sum(activity_count)) %>% 
+  pivot_wider(
+    names_from = day,
+    values_from = sum_count
+  ) %>% 
+  relocate(Tuesday, .after = Monday) %>% 
+  relocate(Friday, Saturday, Sunday, .after = Thursday) %>% 
+  relocate(Wednesday, .before = Thursday)
+
+```
+The person is the least active on Saturdays of week 4 and 5. He is the most active on the Monday of the third week. 
+
+Make a single-panel plot that shows the 24-hr activity time courses over each day.
+
+```{r}
+accel_tidy %>% 
+  ggplot(aes(x = minute, y = activity_count, group = day, color = day)) +
+  geom_line(alpha = .3) +
+  geom_smooth(aes(group = day), se = FALSE)
+```
+He tends to be less active at night than during the day. He has activity peaks on Friday and Sunday. Other days tend to be fairly steady. 
+
+##Problem 3
+
+This data is from the National Oceanic and Atmospheric Association, which provides summary statistics on weather stations, among other public weather information. This dataset is limited to weather data for five core variables from New York from January 1, 1981 to December 31, 2010. Variables included in this set are `r names(ny_noaa)`. *prcp* is precipitation in tenths of mm, *snow* is snowfall in mm, *snowd* is snow depth in mm, *tmax* is the maximum temperature in tenths of degrees C, and *tmin* is the minimum temperature in tenths of degrees C. It has `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. There is extensive missing data, especially due to some stations not reporting at all and some frequently not reporting temperatures. 
+
+Create separate variables for day, month, and year. 
+
+```{r}
+ny_noaa = 
+  ny_noaa %>% 
+  separate(date, into = c("year", "month", "day"), sep = "-")
+```
+
+Look at units for precipitation, snowfall, and temperature. All are given in mm or tenths of C, which are not reasonable units. Change to reasonable units. Find what the most commonly observed snowfall values are and why.  
+
+```{r}
+ny_noaa = 
+  ny_noaa %>% 
+  mutate(
+    prcpcm = prcp/100, 
+    snowcm = snow/10,
+    snwdcm = snwd/10,
+    tmax = as.numeric(tmax),
+    tmin = as.numeric(tmin),
+    tmaxd = tmax/10,
+    tmind = tmin/10)
+  
+ny_noaa %>% 
+  group_by(snowcm) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+The first most common value is 0, which occurs 2,008,508 times in the set, due to most days not having snowfall. The second most common is NA, which occurs 381,221 times, due to the large amount of missingness in the set. The third most common is 2.5cm, which occurs 31,022 times.
+
+Make 2-panel plot of average max temps for January and July in each station across years. Filter, groupby, summarize, and make plot. 
+
+```{r}
+ny_noaa %>% 
+  filter(month %in% c("01", "07")) %>% 
+  group_by(id, year, month) %>% 
+  summarize(avtmaxd = mean(tmaxd)) %>% 
+  ggplot(aes(x = year, y = avtmaxd, color = id)) +
+  geom_point() +
+  facet_grid(. ~ month)
 ```
 
