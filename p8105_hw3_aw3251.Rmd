@@ -11,10 +11,8 @@ library(p8105.datasets)
 data("instacart")
 library(p8105.datasets)
 data("ny_noaa")
-install.packages("hexbin")
 library(ggplot2)
 library(ggridges)
-install.packages("patchwork")
 library(patchwork)
 
 knitr::opts_chunk$set(
@@ -192,13 +190,14 @@ Make 2-panel plot of average max temps for January and July in each station acro
 ny_noaa %>% 
   filter(month %in% c("01", "07")) %>% 
   group_by(id, year, month) %>% 
-  summarize(avtmaxd = mean(tmaxd, na.rm = TRUE, color = id)) %>% 
-  ggplot(aes(x = year, y = avtmaxd, group = id)) +
+  summarize(avtmaxd = mean(tmaxd, na.rm = TRUE)) %>% 
+  ggplot(aes(x = year, y = avtmaxd, group = id, color = id)) +
   geom_point() + 
   geom_path() +
   facet_grid(~ month) + 
   labs(title = "Mean average temperature for January and July across stations and years", x = "year", y = "average maximum temperature (C)") +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) +
+  theme(legend.position = "none")
 ```
 Overall, all of the average maximum temperatures in January are lower than all of teh temperatures in July. There are a couple outliers, including two especially low values in January (1982 and 2005) and one in July (1988). Despite a slight dip in the late 2000s, a the temperature overall rises across the years in January, a potential mark of climate change. 
 
@@ -220,4 +219,4 @@ density_noaa =
 
 hex_noaa + density_noaa
 ```
-
+Most minimum temperatures fall between -45 and 35 degrees C. Most maximum temperatures fall between -32 and 45 degrees C. The bulk of snowfall fell between 0 and 12 cm. 
